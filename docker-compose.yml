@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  whatsapp-service:
+    build: .
+    container_name: whatsapp-web-service
+    restart: unless-stopped
+    volumes:
+      # Persist WhatsApp session data
+      - ./session_data:/app/.wwebjs_auth
+      # Optional: mount logs directory
+      - ./logs:/app/logs
+    environment:
+      - NODE_ENV=production
+      - TZ=UTC
+      - API_KEY=${API_KEY:-your-secret-api-key-here}
+      - PORT=3000
+    ports:
+      - "3000:3000"
+    
+    # Security options
+    security_opt:
+      - no-new-privileges:true
+    
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+        reservations:
+          memory: 256M
+          cpus: '0.25'
+    
+    # Logging configuration
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  session_data:
+    driver: local
