@@ -52,24 +52,34 @@ const authenticateAPI = (req, res, next) => {
 // Global variable to store WhatsApp client
 let whatsappClient = null;
 
-// Create client with local authentication to persist session
-const client = new Client({
+// Prepare Chrome arguments
+const chromeArgs = [
+    '--no-sandbox',
+    '--disable-setuid-sandbox',
+    '--disable-dev-shm-usage',
+    '--disable-gpu',
+    '--no-first-run',
+    '--disable-extensions'
+];
+
+// Add proxy if provided - Chrome handles authentication automatically
+if (process.env.PROXY_URL) {
+    chromeArgs.push(`--proxy-server=${process.env.PROXY_URL}`);
+}
+
+// Prepare client configuration
+const clientConfig = {
     authStrategy: new LocalAuth({
         clientId: "whatsapp-service"
     }),
     puppeteer: {
         headless: process.env.NODE_ENV === 'development' ? false : true,
-        args: [
-            '--no-sandbox',
-            '--disable-setuid-sandbox',
-            '--disable-dev-shm-usage',
-            '--disable-gpu',
-            '--no-first-run',
-            '--disable-extensions',
-            '--user-data-dir=/tmp/chrome-user-data'
-        ]
+        args: chromeArgs
     }
-});
+};
+
+// Create client with local authentication to persist session
+const client = new Client(clientConfig);
 
 // QR Code event - displays QR code for authentication
 client.on('qr', (qr) => {
@@ -125,14 +135,13 @@ app.post('/api/sendMedia', authenticateAPI, async (req, res) => {
         let chat = null;
 
         // Show typing indicator if requested
-        // if (show_typing) {
-        //     chat = await whatsappClient.getChatById(chatId);
-        //     await chat.sendStateTyping();
+        if (show_typing && typing_duration > 0) {
+            chat = await whatsappClient.getChatById(chatId);
+            await chat.sendStateTyping();
             
-        //     // Wait for specified duration (default 2 seconds)
-        //     const waitTime = typing_duration || 2000;
-        //     await new Promise(resolve => setTimeout(resolve, waitTime));
-        // }
+            // Wait for specified duration
+            await new Promise(resolve => setTimeout(resolve, typing_duration));
+        }
 
         console.log('🔗 Downloading media from URL:', file.url);
         
@@ -245,6 +254,11 @@ app.post('/api/forwardMessage', authenticateAPI, async (req, res) => {
             // The forward() method doesn't return anything, just executes the forward
             await messageToForward.forward(chatId);
             console.log('✅ Forward method completed without throwing error');
+            
+            // Add delay to avoid rate limiting (random 1-3 seconds)
+            const delay = 1000 + Math.random() * 2000; // 1-3 seconds
+            console.log(`⏳ Adding ${Math.round(delay)}ms delay to avoid rate limits`);
+            await new Promise(resolve => setTimeout(resolve, delay));
 
             // Since forward() doesn't return the new message, we return success with original message info
             res.json({ 
@@ -426,13 +440,13 @@ app.post('/sendMedia', authenticateAPI, async (req, res) => {
 });
 
 // Send Text Message endpoint with typing support
-app.post('/sendMessage', authenticateAPI, async (req, res) => {
+app.post('/api/sendMessage', authenticateAPI, async (req, res) => {
     try {
         if (!whatsappClient) {
             return res.status(503).json({ error: 'WhatsApp client not ready' });
         }
 
-        const { chatId, message, session, reply_to, show_typing, typing_duration } = req.body;
+        const { chatId, message, reply_to, show_typing, typing_duration } = req.body;
         
         if (!chatId) {
             return res.status(400).json({ error: 'chatId is required' });
@@ -473,7 +487,6 @@ app.post('/sendMessage', authenticateAPI, async (req, res) => {
             success: true, 
             messageId: sentMessage.id._serialized,
             timestamp: sentMessage.timestamp,
-            session: session || 'default'
         });
 
     } catch (error) {

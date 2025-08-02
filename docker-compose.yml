@@ -15,6 +15,9 @@ services:
       - TZ=UTC
       - API_KEY=my_great_api_key
       - PORT=3000
+      # Proxy configuration (optional)
+      # Format: http://username:password@host:port or https://username:password@host:port
+      - PROXY_URL=${PROXY_URL:-}
     ports:
       - "127.0.0.1:3000:3000"
 
@@ -23,7 +26,6 @@ services:
       - no-new-privileges:true
     cap_add:
       - SYS_ADMIN
-    shm_size: 2gb
 
     # Resource limits
     deploy:
