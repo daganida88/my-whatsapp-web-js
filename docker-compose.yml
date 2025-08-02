@@ -13,15 +13,18 @@ services:
     environment:
       - NODE_ENV=production
       - TZ=UTC
-      - API_KEY=${API_KEY:-your-secret-api-key-here}
+      - API_KEY=my_great_api_key
       - PORT=3000
     ports:
-      - "3000:3000"
-    
+      - "127.0.0.1:3000:3000"
+
     # Security options
     security_opt:
       - no-new-privileges:true
-    
+    cap_add:
+      - SYS_ADMIN
+    shm_size: 2gb
+
     # Resource limits
     deploy:
       resources:
@@ -31,7 +34,7 @@ services:
         reservations:
           memory: 256M
           cpus: '0.25'
-    
+
     # Logging configuration
     logging:
       driver: "json-file"

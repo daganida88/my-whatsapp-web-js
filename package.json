@@ -4,8 +4,9 @@
   "description": "WhatsApp Web.js service with Docker support",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js",
-    "dev": "nodemon index.js"
+    "start": "NODE_ENV=production node index.js",
+    "dev": "NODE_ENV=development nodemon index.js",
+    "prod": "NODE_ENV=production node index.js"
   },
   "dependencies": {
     "axios": "^1.6.0",
@@ -13,9 +14,11 @@
     "dotenv": "^17.2.1",
     "express": "^4.18.2",
     "multer": "^1.4.5-lts.1",
-    "nodemon": "^3.1.10",
     "qrcode-terminal": "^0.12.0",
     "whatsapp-web.js": "^1.23.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.10"
   },
   "engines": {
     "node": ">=18.0.0"

@@ -10,6 +10,8 @@ require('dotenv').config();
 
 
 console.log('Starting WhatsApp Web service...');
+console.log(`🚀 Running in ${process.env.NODE_ENV || 'production'} mode`);
+console.log(`👁️  Browser visibility: ${process.env.NODE_ENV === 'development' ? 'VISIBLE (headless: false)' : 'HIDDEN (headless: true)'}`);
 
 // API Configuration
 const API_KEY = process.env.API_KEY;
@@ -56,16 +58,15 @@ const client = new Client({
         clientId: "whatsapp-service"
     }),
     puppeteer: {
-        headless: true,
+        headless: process.env.NODE_ENV === 'development' ? false : true,
         args: [
             '--no-sandbox',
             '--disable-setuid-sandbox',
             '--disable-dev-shm-usage',
-            '--disable-accelerated-2d-canvas',
+            '--disable-gpu',
             '--no-first-run',
-            '--no-zygote',
-            '--single-process',
-            '--disable-gpu'
+            '--disable-extensions',
+            '--user-data-dir=/tmp/chrome-user-data'
         ]
     }
 });
