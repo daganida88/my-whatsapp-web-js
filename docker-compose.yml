@@ -17,7 +17,7 @@ services:
       - PORT=3000
       # Proxy configuration (optional)
       # Format: http://username:password@host:port or https://username:password@host:port
-      - PROXY_URL=${PROXY_URL:-}
+      #- PROXY_URL=https://user-spucrxuesb-country-il-city-tel_aviv-sessionduration-60:at8d8wE=4qfHlpX2xU@gate.decodo.com:10001
     ports:
       - "127.0.0.1:3000:3000"
 
@@ -27,15 +27,15 @@ services:
     cap_add:
       - SYS_ADMIN
 
-    # Resource limits
+    # Resource limits - increased for media processing
     deploy:
       resources:
         limits:
-          memory: 512M
-          cpus: '0.5'
+          memory: 2G
+          cpus: '1.0'
         reservations:
-          memory: 256M
-          cpus: '0.25'
+          memory: 1G
+          cpus: '0.5'
 
     # Logging configuration
     logging:
@@ -43,7 +43,3 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
-
-volumes:
-  session_data:
-    driver: local

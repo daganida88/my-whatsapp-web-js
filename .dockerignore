@@ -1,57 +1,32 @@
-# Node.js
-node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# Session data (will be mounted as volume)
+# Ignore session data
 .wwebjs_auth/
-.wwebjs_cache/
+session_data/
 
-# Uploads directory
-uploads/
-
-# Logs
+# Ignore logs
 logs/
 *.log
 
-# Runtime data
-pids/
-*.pid
-*.seed
-*.pid.lock
+# Ignore uploads
+uploads/
 
-# Environment files
-.env
+# Ignore development files
+.git/
+.gitignore
 .env.local
-.env.development.local
-.env.test.local
-.env.production.local
+.env.development
+node_modules/
+npm-debug.log*
 
-# OS generated files
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
-
-# IDE files
-.vscode/
+# Ignore IDE files
 .idea/
+.vscode/
 *.swp
 *.swo
 
-# Git
-.git/
-.gitignore
+# Ignore OS files
+.DS_Store
+Thumbs.db
 
-# Docker
-Dockerfile*
-docker-compose*
-.dockerignore
-
-# Documentation
-README.md
-*.md
+# Ignore test videos
+*.mp4
+*.mp4.*

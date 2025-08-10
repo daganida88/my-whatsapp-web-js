@@ -25,8 +25,10 @@ COPY package*.json ./
 # Install npm dependencies
 RUN npm ci --omit=dev
 
-# Copy application files
+# Copy application files (excluding session data and other unnecessary files)
 COPY . .
+# Remove any accidentally copied session data
+RUN rm -rf /app/.wwebjs_auth /app/session_data
 
 # Start the application
 CMD ["npm", "start"]
