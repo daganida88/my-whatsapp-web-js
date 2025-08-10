@@ -83,7 +83,8 @@ const clientConfig = {
     }),
     puppeteer: {
         headless: process.env.NODE_ENV === 'development' ? false : true,
-        args: chromeArgs
+        args: chromeArgs,
+        executablePath: "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
     }
 };
 
@@ -155,8 +156,8 @@ app.post('/api/sendMedia', authenticateAPI, async (req, res) => {
         console.log('🔗 Downloading media from URL:', file.url);
         
         const media = await MessageMedia.fromUrl(file.url, { unsafeMime: true });
-        const message = await whatsappClient.sendMessage(chatId, media, { 
-            caption: caption || '' 
+        const message = await whatsappClient.sendMessage(chatId, media, {
+            caption: caption || ''
         });
         console.log('✅ Message sent successfully');
         
