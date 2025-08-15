@@ -36,7 +36,6 @@ RUN \
 
 # Verify the installation was successful
 RUN google-chrome-stable --version
-
 # Set environment variables for Puppeteer
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
 ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome
@@ -51,8 +50,7 @@ COPY package*.json ./
 RUN npm ci --omit=dev
 
 # Create whatsapp user and group for proper permissions
-RUN groupadd -r whatsapp && useradd -r -g whatsapp whatsapp
-
+RUN groupadd -r -g 20 whatsapp && useradd -r -u 501 -g whatsapp whatsapp
 # Copy application files (excluding session data and other unnecessary files)
 COPY . .
 # Remove any accidentally copied session data
