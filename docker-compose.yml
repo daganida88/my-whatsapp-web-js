@@ -5,7 +5,7 @@ services:
     build: .
     container_name: whatsapp-web-service
     restart: unless-stopped
-    user: "501:20"  # Map to host user to avoid permission issues
+# user: "501:20"  # Commented out - using whatsapp user from Dockerfile instead
     volumes:
       # Persist WhatsApp session data
       - ./session_data:/app/.wwebjs_auth
