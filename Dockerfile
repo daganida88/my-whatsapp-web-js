@@ -50,7 +50,11 @@ COPY package*.json ./
 RUN npm ci --omit=dev
 
 # Create whatsapp user and group for proper permissions
-RUN groupadd -r -g 20 whatsapp && useradd -r -u 501 -g whatsapp whatsapp
+RUN groupadd -r -g 20 whatsapp && useradd -r -u 501 -g whatsapp -m -d /home/whatsapp whatsapp
+
+# Add this right before the USER directive
+ENV HOME=/home/whatsapp
+USER whatsapp
 # Copy application files (excluding session data and other unnecessary files)
 COPY . .
 # Remove any accidentally copied session data
@@ -60,7 +64,5 @@ RUN rm -rf /app/.wwebjs_auth /app/session_data
 RUN mkdir -p /app/.wwebjs_auth /app/uploads /app/logs && chown -R whatsapp:whatsapp /app
 
 # Switch to whatsapp user
-USER whatsapp
-
 # Start the application
 CMD ["npm", "start"]
