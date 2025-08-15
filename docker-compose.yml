@@ -5,6 +5,7 @@ services:
     build: .
     container_name: whatsapp-web-service
     restart: unless-stopped
+    user: "501:20"  # Map to host user to avoid permission issues
     volumes:
       # Persist WhatsApp session data
       - ./session_data:/app/.wwebjs_auth
@@ -15,6 +16,7 @@ services:
       - TZ=UTC
       - API_KEY=my_great_api_key
       - PORT=3000
+      - CHROME_EXECUTABLE_PATH=/usr/bin/google-chrome
       # Proxy configuration (optional)
       # Format: http://username:password@host:port or https://username:password@host:port
       #- PROXY_URL=https://user-spucrxuesb-country-il-city-tel_aviv-sessionduration-60:at8d8wE=4qfHlpX2xU@gate.decodo.com:10001

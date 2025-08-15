@@ -79,12 +79,13 @@ if (process.env.PROXY_URL) {
 // Prepare client configuration
 const clientConfig = {
     authStrategy: new LocalAuth({
-        clientId: "whatsapp-service"
+        clientId: "whatsapp-service-persistent",
+        dataPath: "/app/.wwebjs_auth"
     }),
     puppeteer: {
         headless: process.env.NODE_ENV === 'development' ? false : true,
         args: chromeArgs,
-        executablePath: "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+        executablePath: process.env.CHROME_EXECUTABLE_PATH || "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
     }
 };
 
@@ -376,6 +377,13 @@ app.listen(PORT, () => {
     console.log(`API server running on http://localhost:${PORT}`);
     console.log(`API Key required for authentication`);
 });
+
+// Ensure session directory exists before initializing client
+const sessionDir = "/app/.wwebjs_auth";
+if (!fs.existsSync(sessionDir)) {
+    console.log('📁 Creating session directory:', sessionDir);
+    fs.mkdirSync(sessionDir, { recursive: true });
+}
 
 // Initialize the client
 console.log('🚀 Initializing WhatsApp client...');
