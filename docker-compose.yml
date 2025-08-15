@@ -14,12 +14,8 @@ services:
     environment:
       - NODE_ENV=production
       - TZ=UTC
-      - API_KEY=my_great_api_key
       - PORT=3000
       - CHROME_EXECUTABLE_PATH=/usr/bin/google-chrome
-      # Proxy configuration (optional)
-      # Format: http://username:password@host:port or https://username:password@host:port
-      #- PROXY_URL=https://user-spucrxuesb-country-il-city-tel_aviv-sessionduration-60:at8d8wE=4qfHlpX2xU@gate.decodo.com:10001
     ports:
       - "127.0.0.1:3000:3000"
 
