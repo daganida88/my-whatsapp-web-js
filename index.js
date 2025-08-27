@@ -15,7 +15,16 @@ console.log(`👁️  Browser visibility: ${process.env.NODE_ENV === 'developmen
 
 // API Configuration
 const API_KEY = process.env.API_KEY;
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8888;
+
+// Session directory configuration - smart detection for Docker vs local environment
+let SESSION_DATA_PATH = process.env.SESSION_DATA_PATH;
+if (!SESSION_DATA_PATH) {
+    // Auto-detect environment: if /app directory exists, we're likely in Docker
+    const isDockerEnvironment = fs.existsSync('/app') && process.cwd().startsWith('/app');
+    SESSION_DATA_PATH = isDockerEnvironment ? '/app/.wwebjs_auth' : './session_data';
+}
+console.log(`📁 Session data path: ${SESSION_DATA_PATH}`);
 
 if (!API_KEY) {
     console.error('ERROR: API_KEY environment variable is required');
@@ -76,44 +85,7 @@ if (process.env.PROXY_URL) {
     chromeArgs.push(`--proxy-server=${process.env.PROXY_URL}`);
 }
 
-// Prepare client configuration
-const clientConfig = {
-    authStrategy: new LocalAuth({
-        clientId: "whatsapp-service-persistent",
-        dataPath: "/app/.wwebjs_auth"
-    }),
-    puppeteer: {
-        headless: process.env.NODE_ENV === 'development' ? false : true,
-        args: chromeArgs,
-        executablePath: process.env.CHROME_EXECUTABLE_PATH || "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
-    }
-};
-
-// Create client with local authentication to persist session
-const client = new Client(clientConfig);
-
-// QR Code event - displays QR code for authentication
-client.on('qr', (qr) => {
-    console.log('📱 QR Code received! Please scan with your WhatsApp mobile app:');
-    qrcode.generate(qr, { small: true });
-    console.log('⏳ Waiting for QR code scan...');
-});
-
-// Ready event - client is authenticated and ready
-client.on('ready', () => {
-    console.log('✅ WhatsApp Web client is ready!');
-    console.log('🎯 Service is now running and listening for messages...');
-    whatsappClient = client;
-});
-
-// Add more debugging events
-client.on('loading_screen', (percent, message) => {
-    console.log('⏳ Loading screen:', percent, message);
-});
-
-client.on('change_state', state => {
-    console.log('🔄 State changed:', state);
-});
+// Client will be created after session directory is set up
 
 // API Endpoints
 
@@ -318,27 +290,7 @@ app.post('/api/sendMessage', authenticateAPI, async (req, res) => {
     }
 });
 
-// Authentication success
-client.on('authenticated', () => {
-    console.log('🔐 Authentication successful!');
-});
-
-// Authentication failure
-client.on('auth_failure', (msg) => {
-    console.error('❌ Authentication failed:', msg);
-});
-
-// Disconnected event
-client.on('disconnected', (reason) => {
-    console.log('🔌 Client was logged out:', reason);
-});
-
-// Add debugging for remote session saved
-client.on('remote_session_saved', () => {
-    console.log('💾 Remote session saved');
-});
-
-// Message received event - basic echo functionality
+// Message received event - basic echo functionality (commented out)
 // client.on('message', async (message) => {
 //     console.log(`Message from ${message.author || message.from}: ${message.body}`);
     
@@ -353,11 +305,6 @@ client.on('remote_session_saved', () => {
 //         message.reply('Pong!');
 //     }
 // });
-
-// Error handling
-client.on('error', (error) => {
-    console.error('WhatsApp client error:', error);
-});
 
 // Graceful shutdown
 process.on('SIGINT', async () => {
@@ -379,11 +326,90 @@ app.listen(PORT, () => {
 });
 
 // Ensure session directory exists before initializing client
-const sessionDir = "/app/.wwebjs_auth";
-if (!fs.existsSync(sessionDir)) {
-    console.log('📁 Creating session directory:', sessionDir);
-    fs.mkdirSync(sessionDir, { recursive: true });
+try {
+    if (!fs.existsSync(SESSION_DATA_PATH)) {
+        console.log('📁 Creating session directory:', SESSION_DATA_PATH);
+        fs.mkdirSync(SESSION_DATA_PATH, { recursive: true });
+    }
+} catch (error) {
+    console.warn('⚠️  Could not create session directory at:', SESSION_DATA_PATH);
+    console.log('📁 Falling back to local session directory: ./session_data');
+    SESSION_DATA_PATH = './session_data';
+    fs.mkdirSync(SESSION_DATA_PATH, { recursive: true });
 }
+
+// Prepare client configuration after session path is determined
+const clientConfig = {
+    authStrategy: new LocalAuth({
+        clientId: "whatsapp-service-persistent",
+        dataPath: SESSION_DATA_PATH
+    }),
+    puppeteer: {
+        headless: process.env.NODE_ENV === 'development' ? false : true,
+        args: chromeArgs,
+        executablePath: process.env.CHROME_EXECUTABLE_PATH || "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+    }
+};
+
+// Add proxy authentication if credentials are provided
+if (process.env.PROXY_USERNAME && process.env.PROXY_PASSWORD) {
+    clientConfig.proxyAuthentication = {
+        username: process.env.PROXY_USERNAME,
+        password: process.env.PROXY_PASSWORD
+    };
+    console.log('🔐 Proxy authentication configured for user:', process.env.PROXY_USERNAME);
+}
+
+// Create client with local authentication to persist session
+const client = new Client(clientConfig);
+
+// QR Code event - displays QR code for authentication
+client.on('qr', (qr) => {
+    console.log('📱 QR Code received! Please scan with your WhatsApp mobile app:');
+    qrcode.generate(qr, { small: true });
+    console.log('⏳ Waiting for QR code scan...');
+});
+
+// Ready event - client is authenticated and ready
+client.on('ready', () => {
+    console.log('✅ WhatsApp Web client is ready!');
+    console.log('🎯 Service is now running and listening for messages...');
+    whatsappClient = client;
+});
+
+// Add more debugging events
+client.on('loading_screen', (percent, message) => {
+    console.log('⏳ Loading screen:', percent, message);
+});
+
+client.on('change_state', state => {
+    console.log('🔄 State changed:', state);
+});
+
+// Authentication success
+client.on('authenticated', () => {
+    console.log('🔐 Authentication successful!');
+});
+
+// Authentication failure
+client.on('auth_failure', (msg) => {
+    console.error('❌ Authentication failed:', msg);
+});
+
+// Disconnected event
+client.on('disconnected', (reason) => {
+    console.log('🔌 Client was logged out:', reason);
+});
+
+// Add debugging for remote session saved
+client.on('remote_session_saved', () => {
+    console.log('💾 Remote session saved');
+});
+
+// Error handling
+client.on('error', (error) => {
+    console.error('WhatsApp client error:', error);
+});
 
 // Initialize the client
 console.log('🚀 Initializing WhatsApp client...');
